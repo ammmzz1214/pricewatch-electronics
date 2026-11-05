@@ -1,0 +1,24 @@
+name: Unzip project folders
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip folders
+        run: |
+          unzip -o project-folders.zip
+          rm project-folders.zip
+      - name: Commit extracted folders
+        run: |
+          git config user.name "ammmzz1214"
+          git config user.email "ammmzz1214@users.noreply.github.com"
+          git add app gradle
+          git commit -m "Add app and gradle folders" || echo "nothing to commit"
+          git push
