@@ -130,7 +130,11 @@ class SearchViewModel @Inject constructor(
                     results = results,
                     hasSearched = true,
                     snackbarMessage = if (results.isEmpty()) {
-                        "No matching results in your price range. Try widening the range or clearing a filter."
+                        if (it.minPriceText.isBlank() && it.maxPriceText.isBlank()) {
+                            "No results found. Some shops could not be searched — see the list below."
+                        } else {
+                            "No matching results in your price range. Try widening the range or clearing a filter."
+                        }
                     } else {
                         null
                     }
