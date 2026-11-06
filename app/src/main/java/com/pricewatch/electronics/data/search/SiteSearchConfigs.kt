@@ -4,11 +4,16 @@ package com.pricewatch.electronics.data.search
  * Built-in shop search configs. The shops live in the backend: the user
  * never types a site or a URL — a search runs every enabled shop here.
  *
- * Each config is a search-page URL template ({q} = the encoded query) plus
- * optional CSS selectors for the results. When selectors are absent the
- * engine falls back to a generic extractor (links with a nearby £ price),
- * so a shop is never silently skipped just because its layout changed.
- * A shop that cannot be loaded is reported as failed, never faked.
+ * Each config is a search-page URL template ({q} = the %20-encoded query)
+ * plus optional CSS selectors for the results. When selectors are absent
+ * the engine falls back to JSON-LD offers, then a generic extractor (links
+ * with a nearby £ price), so a shop is never silently skipped just
+ * because its layout changed. A shop that cannot be loaded is reported as
+ * failed, never faked.
+ *
+ * All templates were verified against the live sites on 2026-11-06.
+ * Box.co.uk has no search-results page at all (its search is an overlay on
+ * the homepage), so it has no config and is not searched.
  */
 data class SiteSearchConfig(
     val siteId: Long,
@@ -49,7 +54,7 @@ object SiteSearchConfigs {
         ),
         SiteSearchConfig(
             siteId = 3,
-            searchUrlTemplate = "https://www.currys.co.uk/search?searchTerm={q}"
+            searchUrlTemplate = "https://www.currys.co.uk/search?q={q}"
         ),
         SiteSearchConfig(
             siteId = 5,
@@ -61,11 +66,7 @@ object SiteSearchConfigs {
         ),
         SiteSearchConfig(
             siteId = 13,
-            searchUrlTemplate = "https://www.laptopsdirect.co.uk/search?query={q}"
-        ),
-        SiteSearchConfig(
-            siteId = 11,
-            searchUrlTemplate = "https://www.box.co.uk/search?query={q}"
+            searchUrlTemplate = "https://www.laptopsdirect.co.uk/search-results/{q}?cio=1"
         ),
         SiteSearchConfig(
             siteId = 8,
@@ -77,15 +78,33 @@ object SiteSearchConfigs {
         ),
         SiteSearchConfig(
             siteId = 6,
-            searchUrlTemplate = "https://ao.com/l/search/{q}/"
+            searchUrlTemplate = "https://ao.com/l/search/101/99/?search={q}"
         ),
         SiteSearchConfig(
             siteId = 4,
-            searchUrlTemplate = "https://www.very.co.uk/search/{q}.end"
+            searchUrlTemplate = "https://www.very.co.uk/search/{q}"
         ),
         SiteSearchConfig(
             siteId = 32,
-            searchUrlTemplate = "https://www.musicmagpie.co.uk/store/search/?q={q}"
+            searchUrlTemplate = "https://www.musicmagpie.co.uk/store/category/?keyword={q}"
+        ),
+        // Price-comparison sites: one search here returns offers from many
+        // retailers, with the retailer name carried on each result.
+        SiteSearchConfig(
+            siteId = 33,
+            searchUrlTemplate = "https://www.idealo.co.uk/mscat.html?q={q}"
+        ),
+        SiteSearchConfig(
+            siteId = 34,
+            searchUrlTemplate = "https://pricespy.co.uk/search?query={q}"
+        ),
+        SiteSearchConfig(
+            siteId = 35,
+            searchUrlTemplate = "https://www.pricerunner.com/results?q={q}"
+        ),
+        SiteSearchConfig(
+            siteId = 38,
+            searchUrlTemplate = "https://www.google.com/search?q={q}&udm=28"
         )
     )
 
