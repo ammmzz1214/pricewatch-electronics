@@ -241,7 +241,11 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                 item {
                     Text(
                         text = if (state.results.isEmpty()) {
-                            "No results in this price range."
+                            if (state.minPriceText.isBlank() && state.maxPriceText.isBlank()) {
+                                "No results found."
+                            } else {
+                                "No results in this price range."
+                            }
                         } else {
                             "${state.results.size} results — cheapest first"
                         },
