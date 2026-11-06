@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pricewatch.electronics.domain.models.CheckStatus
 import com.pricewatch.electronics.domain.models.Product
+import com.pricewatch.electronics.domain.models.Site
 import com.pricewatch.electronics.domain.repositories.ProductRepository
 import com.pricewatch.electronics.domain.repositories.SiteRepository
 import com.pricewatch.electronics.presentation.util.CheckProgress
@@ -82,7 +83,7 @@ class HomeViewModel @Inject constructor(
         filterFlow,
         checkNowFlow,
         errorFlow
-    ) { products, sites, sort, filter, checkNow, error ->
+    ) { products: List<Product>, sites: List<Site>, sort: ProductSort, filter: ProductFilter, checkNow: CheckNowUiState, error: String? ->
         HomeUiState(
             products = applySortAndFilter(products, sort, filter),
             siteNames = sites.associate { it.id to it.name },
