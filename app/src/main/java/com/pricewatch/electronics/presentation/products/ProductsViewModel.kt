@@ -8,8 +8,8 @@ import com.pricewatch.electronics.domain.models.Site
 import com.pricewatch.electronics.domain.repositories.ProductRepository
 import com.pricewatch.electronics.domain.repositories.SiteRepository
 import com.pricewatch.electronics.domain.usecases.DeleteProductUseCase
-import com.pricewatch.electronics.presentation.home.ProductFilter
-import com.pricewatch.electronics.presentation.home.ProductSort
+import com.pricewatch.electronics.presentation.util.ProductFilter
+import com.pricewatch.electronics.presentation.util.ProductSort
 import com.pricewatch.electronics.presentation.util.applySortAndFilter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
