@@ -2,10 +2,16 @@ package com.pricewatch.electronics.presentation.util
 
 import com.pricewatch.electronics.domain.models.CheckStatus
 import com.pricewatch.electronics.domain.models.Product
-import com.pricewatch.electronics.presentation.home.ProductFilter
-import com.pricewatch.electronics.presentation.home.ProductSort
 
-/** Shared sort/filter logic for the Home dashboard and My Products. */
+/** Shared sort/filter logic for My Products (moved here from the deleted Home dashboard). */
+enum class ProductSort {
+    LOWEST_PRICE, HIGHEST_PRICE, LARGEST_DROP, LARGEST_RISE, RECENTLY_ADDED, RECENTLY_CHECKED
+}
+
+enum class ProductFilter {
+    ALL, DECREASED, INCREASED, UNCHANGED, CHECK_FAILED, TARGET_REACHED
+}
+
 fun applySortAndFilter(
     products: List<Product>,
     sort: ProductSort,
