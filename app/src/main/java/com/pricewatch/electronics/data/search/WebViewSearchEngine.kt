@@ -44,14 +44,18 @@ class WebViewSearchEngine @Inject constructor(
         val title: String,
         val priceText: String,
         val url: String,
-        val imageUrl: String?
+        val imageUrl: String?,
+        val sellerName: String? = null
     )
 
+    // Mobile UA, matching the Android device: a desktop Windows UA from an
+    // Android WebView is exactly what bot protection flags. Mobile search
+    // pages are also lighter, so they load faster on the phone.
     private val desktopUa =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-    private val loadTimeoutMs = 15_000L
-    private val settleDelayMs = 2_500L
+        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+    private val loadTimeoutMs = 30_000L
+    private val settleDelayMs = 4_000L
 
     suspend fun searchSite(site: Site, config: SiteSearchConfig, query: String): Result<List<RawItem>> {
         val url = SearchText.buildSearchUrl(config.searchUrlTemplate, query)
@@ -104,7 +108,13 @@ class WebViewSearchEngine @Inject constructor(
             val priceText = o.optString("priceText")
             val url = o.optString("url")
             if (title.isBlank() || priceText.isBlank() || url.isBlank()) continue
-            out += RawItem(title, priceText, url, o.optString("imageUrl").takeIf { it.isNotBlank() })
+            out += RawItem(
+                title,
+                priceText,
+                url,
+                o.optString("imageUrl").takeIf { it.isNotBlank() },
+                o.optString("sellerName").takeIf { it.isNotBlank() }
+            )
         }
         return out
     }
@@ -210,10 +220,10 @@ class WebViewSearchEngine @Inject constructor(
               function txt(el){ return el ? (el.innerText || '').replace(/\s+/g,' ').trim() : ''; }
               function abs(u){ if(!u) return ''; try { return new URL(u, location.href).href; } catch(e){ return ''; } }
               var items = [];
-              function push(title, priceText, url, img){
+              function push(title, priceText, url, img, seller){
                 if(!title || title.length < 8 || !priceText || !url) return;
                 if(url.indexOf('http') !== 0) return;
-                items.push({title:title, priceText:priceText, url:url, imageUrl:img||null});
+                items.push({title:title, priceText:priceText, url:url, imageUrl:img||null, sellerName:seller||null});
               }
               var ITEM_SEL = __ITEM_SEL__;
               if (ITEM_SEL) {
@@ -227,6 +237,40 @@ class WebViewSearchEngine @Inject constructor(
                   var href = aEl ? (aEl.getAttribute('href') || aEl.href || '') : '';
                   push(txt(tEl), txt(pEl), abs(href), imEl ? (imEl.getAttribute('src') || '') : null);
                 }
+              }
+              if (items.length === 0) {
+                try {
+                  var scripts = document.querySelectorAll('script[type="application/ld+json"]');
+                  for (var s=0;s<scripts.length;s++){
+                    var data; try { data = JSON.parse(scripts[s].textContent); } catch(e){ continue; }
+                    var arr = Array.isArray(data) ? data : [data];
+                    for (var d=0;d<arr.length;d++){
+                      var root = arr[d];
+                      var products = [];
+                      if (root && root['@type'] === 'Product') products.push(root);
+                      if (root && root['@type'] === 'ItemList' && root.itemListElement) {
+                        for (var e=0;e<root.itemListElement.length;e++){
+                          var it = root.itemListElement[e];
+                          if (it.item) products.push(it.item);
+                          else if (it['@type'] === 'Product') products.push(it);
+                        }
+                      }
+                      for (var p=0;p<products.length;p++){
+                        var prod = products[p];
+                        var offers = prod.offers;
+                        if (!offers) continue;
+                        var offArr = Array.isArray(offers) ? offers : [offers];
+                        for (var o=0;o<offArr.length;o++){
+                          var off = offArr[o];
+                          if (!off || off.price == null) continue;
+                          var seller = '';
+                          if (off.seller) seller = off.seller.name || '';
+                          push(prod.name || '', '£' + String(off.price), off.url || prod.url || '', prod.image || null, seller);
+                        }
+                      }
+                    }
+                  }
+                } catch(e){}
               }
               if (items.length === 0) {
                 var seen = {};
