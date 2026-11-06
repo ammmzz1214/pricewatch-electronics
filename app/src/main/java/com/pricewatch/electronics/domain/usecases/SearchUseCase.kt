@@ -40,7 +40,7 @@ class SearchAcrossSitesUseCase @Inject constructor(
                             title = raw.title,
                             priceMinor = minor,
                             siteId = site.id,
-                            siteName = site.name,
+                            siteName = raw.sellerName?.let { "$it (via ${site.name})" } ?: site.name,
                             productUrl = raw.url,
                             imageUrl = raw.imageUrl
                         )
@@ -59,18 +59,43 @@ class SearchAcrossSitesUseCase @Inject constructor(
 
 /** Saves a search result as a tracked product. The URL comes from the shop, never typed. */
 class TrackSearchResultUseCase @Inject constructor(
-    private val addProductUseCase: AddProductUseCase
+    private val addProductUseCase: AddProductUseCase,
+    private val siteRepository: SiteRepository
 ) {
     suspend operator fun invoke(item: SearchResultItem, query: String): Result<Long> {
         val product = Product(
             name = item.title.take(200),
             subcategory = SearchText.inferSubcategory(query),
-            siteId = item.siteId,
+            // The siteId is the shop the URL actually belongs to (for
+            // comparison-page results, the retailer behind the offer).
+            siteId = resolveRetailerSiteId(item),
             productUrl = item.productUrl,
             currentPriceMinorUnits = item.priceMinor,
             currencyCode = item.currencyCode,
             imageUrl = item.imageUrl
         )
         return addProductUseCase(product)
+    }
+
+    /**
+     * A result from a comparison page points at the retailer's own URL, so
+     * the tracked product belongs to that retailer, not the comparison site.
+     * Falls back to the result's own site when the URL matches no known shop.
+     */
+    private suspend fun resolveRetailerSiteId(item: SearchResultItem): Long {
+        val host = try {
+            java.net.URI(item.productUrl).host?.lowercase() ?: return item.siteId
+        } catch (e: Exception) {
+            return item.siteId
+        }
+        val sites = try {
+            siteRepository.getAllSites()
+        } catch (e: Exception) {
+            return item.siteId
+        }
+        return sites.firstOrNull { site ->
+            val domain = site.domain.substringBefore("/").lowercase()
+            host == domain || host.endsWith(".$domain")
+        }?.id ?: item.siteId
     }
 }
