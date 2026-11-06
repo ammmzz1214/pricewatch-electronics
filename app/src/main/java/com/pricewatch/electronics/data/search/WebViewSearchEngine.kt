@@ -145,7 +145,7 @@ class WebViewSearchEngine @Inject constructor(
                                 error: WebResourceError
                             ) {
                                 if (request.isForMainFrame && cont.isActive) {
-                                    cont.resume(Result.Error("Could not load the shop page."))
+                                    cont.resume(Result.Error("Could not load the shop page."), null)
                                 }
                             }
 
@@ -157,7 +157,7 @@ class WebViewSearchEngine @Inject constructor(
                                 failingUrl: String?
                             ) {
                                 if (cont.isActive) {
-                                    cont.resume(Result.Error("Could not load the shop page."))
+                                    cont.resume(Result.Error("Could not load the shop page."), null)
                                 }
                             }
 
@@ -168,7 +168,8 @@ class WebViewSearchEngine @Inject constructor(
                             ) {
                                 if (request.isForMainFrame && cont.isActive) {
                                     cont.resume(
-                                        Result.Error("Shop returned HTTP ${errorResponse.statusCode}.")
+                                        Result.Error("Shop returned HTTP ${errorResponse.statusCode}."),
+                                        null
                                     )
                                 }
                             }
@@ -196,7 +197,7 @@ class WebViewSearchEngine @Inject constructor(
     ) {
         @JavascriptInterface
         fun onResult(json: String) {
-            if (cont.isActive) cont.resume(Result.Success(json))
+            if (cont.isActive) cont.resume(Result.Success(json), null)
         }
     }
 
