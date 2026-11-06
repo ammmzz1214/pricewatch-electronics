@@ -21,7 +21,7 @@ class SearchAcrossSitesUseCase @Inject constructor(
     private val siteRepository: SiteRepository,
     private val engine: WebViewSearchEngine
 ) {
-    suspend fun invoke(
+    suspend operator fun invoke(
         filters: SearchFilters,
         onSiteFinished: (SiteSearchOutcome) -> Unit
     ): List<SearchResultItem> {
@@ -61,7 +61,7 @@ class SearchAcrossSitesUseCase @Inject constructor(
 class TrackSearchResultUseCase @Inject constructor(
     private val addProductUseCase: AddProductUseCase
 ) {
-    suspend fun invoke(item: SearchResultItem, query: String): Result<Long> {
+    suspend operator fun invoke(item: SearchResultItem, query: String): Result<Long> {
         val product = Product(
             name = item.title.take(200),
             subcategory = SearchText.inferSubcategory(query),
