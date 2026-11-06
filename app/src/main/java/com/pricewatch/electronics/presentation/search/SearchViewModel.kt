@@ -114,15 +114,21 @@ class SearchViewModel @Inject constructor(
                     snackbarMessage = null
                 )
             }
-            val results = searchAcrossSites.invoke(filters) { outcome ->
-                _uiState.update { current ->
-                    current.copy(
-                        outcomes = current.outcomes + outcome,
-                        searchedSiteCount = current.searchedSiteCount + 1,
-                        currentSiteName = outcome.siteName
-                    )
+            val results = searchAcrossSites.invoke(
+                filters,
+                onSiteFinished = { outcome ->
+                    _uiState.update { current ->
+                        current.copy(
+                            outcomes = current.outcomes + outcome,
+                            searchedSiteCount = current.searchedSiteCount + 1,
+                            currentSiteName = outcome.siteName
+                        )
+                    }
+                },
+                onResults = { partial ->
+                    _uiState.update { it.copy(results = partial) }
                 }
-            }
+            )
             _uiState.update {
                 it.copy(
                     isSearching = false,
