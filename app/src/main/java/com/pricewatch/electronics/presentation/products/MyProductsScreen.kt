@@ -39,8 +39,8 @@ import com.pricewatch.electronics.domain.models.Product
 import com.pricewatch.electronics.presentation.components.ConfirmDeleteDialog
 import com.pricewatch.electronics.presentation.components.EmptyState
 import com.pricewatch.electronics.presentation.components.ProductCard
-import com.pricewatch.electronics.presentation.home.ProductFilter
-import com.pricewatch.electronics.presentation.home.ProductSort
+import com.pricewatch.electronics.presentation.util.ProductFilter
+import com.pricewatch.electronics.presentation.util.ProductSort
 import com.pricewatch.electronics.presentation.util.filterLabel
 import com.pricewatch.electronics.presentation.util.sortLabel
 
