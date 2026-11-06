@@ -3,6 +3,7 @@ package com.pricewatch.electronics.core.network
 import com.pricewatch.electronics.core.common.Result
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
