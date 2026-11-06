@@ -14,3 +14,8 @@
 -dontwarn coil.**
 # Room
 -keep class * extends androidx.room.RoomDatabase
+
+# WebView search bridge
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
