@@ -1,6 +1,8 @@
 package com.pricewatch.electronics.core.network
 
 import com.pricewatch.electronics.core.common.Result
+import com.pricewatch.electronics.data.search.WebViewSearchEngine
+import com.pricewatch.electronics.domain.models.Site
 
 data class ProviderPrice(
     val priceMinorUnits: Long,
@@ -47,4 +49,40 @@ class ManualPriceProvider(
 
     override suspend fun fetchCurrentPrice(url: String): Result<ProviderPrice> =
         Result.Error("Manual-only site ($siteDomain): automated price checking is not available. Update the price manually.")
+}
+
+/**
+ * Reads the live price from the shop's own product page through the
+ * WebView search engine — the same engine that powers search. Used for
+ * Check Now on tracked products. A shop that blocks the load reports an
+ * honest failure; the last known price is never overwritten.
+ */
+class WebViewPriceProvider(
+    override val siteId: Long,
+    override val siteDomain: String,
+    private val engine: WebViewSearchEngine,
+    private val site: Site
+) : PriceProvider {
+    override fun supportsUrl(url: String): Boolean =
+        url.contains(siteDomain.substringBefore("/"), ignoreCase = true)
+
+    override fun validateUrl(url: String): Boolean = supportsUrl(url)
+
+    override suspend fun fetchProductInfo(url: String): Result<ProviderProductInfo> =
+        when (val result = engine.fetchPrice(url, site)) {
+            is Result.Success -> Result.Success(
+                ProviderProductInfo(
+                    name = null,
+                    priceMinorUnits = result.data.priceMinorUnits,
+                    currencyCode = result.data.currencyCode,
+                    imageUrl = null,
+                    inStock = result.data.inStock
+                )
+            )
+            is Result.Error -> Result.Error(result.message, result.cause)
+            Result.Loading -> Result.Error("Price check failed for $siteDomain.")
+        }
+
+    override suspend fun fetchCurrentPrice(url: String): Result<ProviderPrice> =
+        engine.fetchPrice(url, site)
 }
