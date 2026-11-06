@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pricewatch.electronics.core.common.Result
 import com.pricewatch.electronics.domain.models.Product
+import com.pricewatch.electronics.domain.models.Site
 import com.pricewatch.electronics.domain.repositories.ProductRepository
 import com.pricewatch.electronics.domain.repositories.SiteRepository
 import com.pricewatch.electronics.domain.usecases.DeleteProductUseCase
@@ -52,7 +53,7 @@ class ProductsViewModel @Inject constructor(
         filterFlow,
         errorFlow,
         deletedFlow
-    ) { products, sites, query, sort, filter, error, deleted ->
+    ) { products: List<Product>, sites: List<Site>, query: String, sort: ProductSort, filter: ProductFilter, error: String?, deleted: Product? ->
         val siteNames = sites.associate { it.id to it.name }
         val searched = if (query.isBlank()) {
             products

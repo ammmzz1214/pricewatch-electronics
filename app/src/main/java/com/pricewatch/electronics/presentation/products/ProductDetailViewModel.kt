@@ -66,7 +66,7 @@ class ProductDetailViewModel @Inject constructor(
         infoFlow,
         checkingFlow,
         deletedFlow
-    ) { product, history, error, info, checking, deleted ->
+    ) { product: Product?, history: List<PriceHistory>, error: String?, info: String?, checking: Boolean, deleted: Boolean ->
         ProductDetailUiState(
             product = product,
             history = history,

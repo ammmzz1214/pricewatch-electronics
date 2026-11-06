@@ -6,6 +6,7 @@ import com.pricewatch.electronics.core.common.Money
 import com.pricewatch.electronics.core.common.Result
 import com.pricewatch.electronics.core.common.UrlValidator
 import com.pricewatch.electronics.domain.models.Category
+import com.pricewatch.electronics.domain.models.MonitoringSettings
 import com.pricewatch.electronics.domain.models.Product
 import com.pricewatch.electronics.domain.models.Site
 import com.pricewatch.electronics.domain.models.Subcategory
@@ -56,7 +57,7 @@ class AddProductViewModel @Inject constructor(
         errorFlow,
         savingFlow,
         createdFlow
-    ) { form, sites, settings, error, saving, created ->
+    ) { form: AddProductUiState, sites: List<Site>, settings: MonitoringSettings, error: String?, saving: Boolean, created: Long? ->
         // Default the shop to the first site and the currency to the saved
         // preference when the user has not chosen yet.
         val resolvedSiteId = form.siteId ?: sites.firstOrNull()?.id
