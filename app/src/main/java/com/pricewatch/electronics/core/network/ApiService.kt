@@ -2,6 +2,7 @@ package com.pricewatch.electronics.core.network
 
 import com.pricewatch.electronics.core.common.Result
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -45,7 +46,7 @@ object NetworkFactory {
             .baseUrl(baseUrl)
             .client(client)
             .addConverterFactory(
-                com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory(
+                Json.asConverterFactory(
                     "application/json".toMediaType()
                 )
             )
