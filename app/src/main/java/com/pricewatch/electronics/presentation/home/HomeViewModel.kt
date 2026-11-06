@@ -83,7 +83,13 @@ class HomeViewModel @Inject constructor(
         filterFlow,
         checkNowFlow,
         errorFlow
-    ) { products: List<Product>, sites: List<Site>, sort: ProductSort, filter: ProductFilter, checkNow: CheckNowUiState, error: String? ->
+    ) { args ->
+        val products = args[0] as List<Product>
+        val sites = args[1] as List<Site>
+        val sort = args[2] as ProductSort
+        val filter = args[3] as ProductFilter
+        val checkNow = args[4] as CheckNowUiState
+        val error = args[5] as String?
         HomeUiState(
             products = applySortAndFilter(products, sort, filter),
             siteNames = sites.associate { it.id to it.name },
