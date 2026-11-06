@@ -237,7 +237,7 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                 }
             }
 
-            if (state.hasSearched && !state.isSearching) {
+            if (state.results.isNotEmpty() || (state.hasSearched && !state.isSearching)) {
                 item {
                     Text(
                         text = if (state.results.isEmpty()) {
@@ -246,6 +246,8 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
                             } else {
                                 "No results in this price range."
                             }
+                        } else if (state.isSearching) {
+                            "${state.results.size} results so far — cheapest first"
                         } else {
                             "${state.results.size} results — cheapest first"
                         },
@@ -304,7 +306,7 @@ fun SearchScreen(viewModel: SearchViewModel = hiltViewModel()) {
             if (!state.hasSearched && !state.isSearching) {
                 item {
                     Text(
-                        text = "Shops searched: eBay, Amazon, Argos, Currys, John Lewis, Back Market, Laptops Direct, Box, eBuyer, Scan, AO, Very and MusicMagpie. Prices are read live from each shop's own website on your phone.",
+                        text = "Shops searched: eBay, Amazon, Argos, Currys, John Lewis, Back Market, Laptops Direct, eBuyer, Scan, AO, Very and MusicMagpie, plus Idealo, PriceSpy, PriceRunner and Google Shopping. Prices are read live from each shop's own website on your phone.",
                         style = MaterialTheme.typography.bodySmall,
                         color = PriceWatchColors.SecondaryText
                     )
