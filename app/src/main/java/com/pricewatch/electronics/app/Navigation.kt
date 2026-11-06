@@ -2,13 +2,11 @@ package com.pricewatch.electronics.app
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Store
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,26 +25,31 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.pricewatch.electronics.presentation.history.HistoryScreen
-import com.pricewatch.electronics.presentation.home.HomeScreen
-import com.pricewatch.electronics.presentation.products.AddProductScreen
 import com.pricewatch.electronics.presentation.products.MyProductsScreen
 import com.pricewatch.electronics.presentation.products.ProductDetailScreen
+import com.pricewatch.electronics.presentation.search.SearchScreen
 import com.pricewatch.electronics.presentation.settings.SettingsScreen
 import com.pricewatch.electronics.presentation.sites.SiteDetailScreen
 import com.pricewatch.electronics.presentation.sites.SitesScreen
 
+/**
+ * Search is the home screen: one window where the user types a product
+ * name, sets specs and a price range, and every built-in shop is searched.
+ * There is no Add Product screen and no URL field anywhere in the app —
+ * tracked products come from search results, with the shop's URL saved
+ * behind the scenes.
+ */
 sealed class Screen(val route: String, val label: String, val icon: ImageVector) {
-    data object Home : Screen("home", "Home", Icons.Filled.Home)
+    data object Search : Screen("search", "Search", Icons.Filled.Search)
     data object Products : Screen("products", "My Products", Icons.Filled.List)
     data object Sites : Screen("sites", "Sites", Icons.Filled.Store)
     data object History : Screen("history", "History", Icons.Filled.History)
     data object Settings : Screen("settings", "Settings", Icons.Filled.Settings)
-    data object AddProduct : Screen("add_product", "Add Product", Icons.Filled.Add)
     data object ProductDetail : Screen("product_detail/{productId}", "Product Detail", Icons.Filled.List)
     data object SiteDetail : Screen("site_detail/{siteId}", "Site Detail", Icons.Filled.Store)
 
     companion object {
-        val bottomNavItems = listOf(Home, Products, Sites, History, Settings)
+        val bottomNavItems = listOf(Search, Products, Sites, History, Settings)
         fun productDetailRoute(productId: Long) = "product_detail/$productId"
         fun siteDetailRoute(siteId: Long) = "site_detail/$siteId"
     }
@@ -58,8 +61,6 @@ fun PriceWatchNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showBottomBar = Screen.bottomNavItems.any { it.route == currentDestination?.route }
-    val showFab = currentDestination?.route == Screen.Home.route ||
-        currentDestination?.route == Screen.Products.route
 
     Scaffold(
         bottomBar = {
@@ -83,31 +84,20 @@ fun PriceWatchNavHost() {
                     }
                 }
             }
-        },
-        floatingActionButton = {
-            if (showFab) {
-                FloatingActionButton(onClick = { navController.navigate(Screen.AddProduct.route) }) {
-                    Icon(Icons.Filled.Add, contentDescription = "Add product")
-                }
-            }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Home.route,
+            startDestination = Screen.Search.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(Screen.Home.route) {
-                HomeScreen(
-                    onNavigateToProduct = { id -> navController.navigate(Screen.productDetailRoute(id)) },
-                    onNavigateToAddProduct = { navController.navigate(Screen.AddProduct.route) },
-                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                )
+            composable(Screen.Search.route) {
+                SearchScreen()
             }
             composable(Screen.Products.route) {
                 MyProductsScreen(
                     onNavigateToProduct = { id -> navController.navigate(Screen.productDetailRoute(id)) },
-                    onNavigateToAddProduct = { navController.navigate(Screen.AddProduct.route) }
+                    onNavigateToAddProduct = { navController.navigate(Screen.Search.route) }
                 )
             }
             composable(Screen.Sites.route) {
@@ -121,14 +111,6 @@ fun PriceWatchNavHost() {
                 )
             }
             composable(Screen.Settings.route) { SettingsScreen() }
-            composable(Screen.AddProduct.route) {
-                AddProductScreen(
-                    onProductCreated = { id -> navController.navigate(Screen.productDetailRoute(id)) {
-                        popUpTo(Screen.AddProduct.route) { inclusive = true }
-                    } },
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            }
             composable(
                 route = Screen.ProductDetail.route,
                 arguments = listOf(navArgument("productId") {
