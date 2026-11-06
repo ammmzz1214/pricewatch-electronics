@@ -10,12 +10,25 @@ import com.pricewatch.electronics.domain.models.SearchResultItem
 import com.pricewatch.electronics.domain.models.SiteSearchOutcome
 import com.pricewatch.electronics.domain.repositories.SiteRepository
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /**
- * Searches every built-in shop for the query, one shop at a time, and
- * reports each shop's outcome as it finishes so the UI can show live
- * progress. Returns the merged results with the user's spec filters and
- * price range applied, cheapest first.
+ * Searches every built-in shop for the query and reports each shop's
+ * outcome as it finishes so the UI can show live progress. Results are
+ * streamed to [onResults] as each shop finishes, cheapest first, so the
+ * user sees prices appearing instead of waiting for every shop.
+ *
+ * Comparison sites (Idealo, PriceSpy, PriceRunner, Google Shopping)
+ * answer one search with offers from many retailers, and they block
+ * automated access far less often than the retailers do — so they are
+ * searched first. Up to [MAX_CONCURRENT_SEARCHES] shops load at once:
+ * searching one shop at a time made a full search take minutes when
+ * several shops were slow or blocked.
+ *
+ * Returns the merged results with the user's spec filters and price
+ * range applied, cheapest first.
  */
 class SearchAcrossSitesUseCase @Inject constructor(
     private val siteRepository: SiteRepository,
@@ -23,37 +36,55 @@ class SearchAcrossSitesUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         filters: SearchFilters,
-        onSiteFinished: (SiteSearchOutcome) -> Unit
+        onSiteFinished: (SiteSearchOutcome) -> Unit,
+        onResults: (List<SearchResultItem>) -> Unit = {}
     ): List<SearchResultItem> {
         val query = filters.query.trim()
         if (query.isBlank()) return emptyList()
         val sites = siteRepository.getAllSites()
             .filter { it.isEnabled && SiteSearchConfigs.forSite(it.id) != null }
+            .sortedWith(compareBy({ it.id !in COMPARISON_SITE_IDS }, { it.id }))
         val merged = mutableListOf<SearchResultItem>()
-        for (site in sites) {
-            val config = SiteSearchConfigs.forSite(site.id) ?: continue
-            val outcome = when (val result = engine.searchSite(site, config, query)) {
-                is Result.Success -> {
-                    val items = result.data.mapNotNull { raw ->
-                        val minor = SearchText.parsePriceToMinor(raw.priceText) ?: return@mapNotNull null
-                        SearchResultItem(
-                            title = raw.title,
-                            priceMinor = minor,
-                            siteId = site.id,
-                            siteName = raw.sellerName?.let { "$it (via ${site.name})" } ?: site.name,
-                            productUrl = raw.url,
-                            imageUrl = raw.imageUrl
-                        )
+        val lock = Any()
+        coroutineScope {
+            sites.chunked(MAX_CONCURRENT_SEARCHES).forEach { batch ->
+                batch.map { site ->
+                    async {
+                        val config = SiteSearchConfigs.forSite(site.id) ?: return@async
+                        val outcome = when (val result = engine.searchSite(site, config, query)) {
+                            is Result.Success -> {
+                                val items = result.data.mapNotNull { raw ->
+                                    val minor = SearchText.parsePriceToMinor(raw.priceText) ?: return@mapNotNull null
+                                    SearchResultItem(
+                                        title = raw.title,
+                                        priceMinor = minor,
+                                        siteId = site.id,
+                                        siteName = raw.sellerName?.let { "$it (via ${site.name})" } ?: site.name,
+                                        productUrl = raw.url,
+                                        imageUrl = raw.imageUrl
+                                    )
+                                }
+                                SiteSearchOutcome(site.id, site.name, items)
+                            }
+                            is Result.Error -> SiteSearchOutcome(site.id, site.name, emptyList(), result.message)
+                            Result.Loading -> SiteSearchOutcome(site.id, site.name, emptyList(), "Search failed.")
+                        }
+                        val snapshot: List<SearchResultItem> = synchronized(lock) {
+                            merged += outcome.results
+                            SearchText.applyFilters(merged.toList(), filters)
+                        }
+                        onSiteFinished(outcome)
+                        onResults(snapshot)
                     }
-                    SiteSearchOutcome(site.id, site.name, items)
-                }
-                is Result.Error -> SiteSearchOutcome(site.id, site.name, emptyList(), result.message)
-                Result.Loading -> SiteSearchOutcome(site.id, site.name, emptyList(), "Search failed.")
+                }.awaitAll()
             }
-            merged += outcome.results
-            onSiteFinished(outcome)
         }
-        return SearchText.applyFilters(merged, filters)
+        return SearchText.applyFilters(merged.toList(), filters)
+    }
+
+    companion object {
+        private val COMPARISON_SITE_IDS = listOf(33L, 34L, 35L, 38L)
+        private const val MAX_CONCURRENT_SEARCHES = 4
     }
 }
 
