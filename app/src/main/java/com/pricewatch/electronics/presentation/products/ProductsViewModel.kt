@@ -53,7 +53,14 @@ class ProductsViewModel @Inject constructor(
         filterFlow,
         errorFlow,
         deletedFlow
-    ) { products: List<Product>, sites: List<Site>, query: String, sort: ProductSort, filter: ProductFilter, error: String?, deleted: Product? ->
+    ) { args ->
+        val products = args[0] as List<Product>
+        val sites = args[1] as List<Site>
+        val query = args[2] as String
+        val sort = args[3] as ProductSort
+        val filter = args[4] as ProductFilter
+        val error = args[5] as String?
+        val deleted = args[6] as Product?
         val siteNames = sites.associate { it.id to it.name }
         val searched = if (query.isBlank()) {
             products

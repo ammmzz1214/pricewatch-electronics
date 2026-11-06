@@ -57,7 +57,13 @@ class AddProductViewModel @Inject constructor(
         errorFlow,
         savingFlow,
         createdFlow
-    ) { form: AddProductUiState, sites: List<Site>, settings: MonitoringSettings, error: String?, saving: Boolean, created: Long? ->
+    ) { args ->
+        val form = args[0] as AddProductUiState
+        val sites = args[1] as List<Site>
+        val settings = args[2] as MonitoringSettings
+        val error = args[3] as String?
+        val saving = args[4] as Boolean
+        val created = args[5] as Long?
         // Default the shop to the first site and the currency to the saved
         // preference when the user has not chosen yet.
         val resolvedSiteId = form.siteId ?: sites.firstOrNull()?.id

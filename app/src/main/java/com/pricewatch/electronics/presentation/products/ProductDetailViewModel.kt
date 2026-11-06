@@ -66,7 +66,13 @@ class ProductDetailViewModel @Inject constructor(
         infoFlow,
         checkingFlow,
         deletedFlow
-    ) { product: Product?, history: List<PriceHistory>, error: String?, info: String?, checking: Boolean, deleted: Boolean ->
+    ) { args ->
+        val product = args[0] as Product?
+        val history = args[1] as List<PriceHistory>
+        val error = args[2] as String?
+        val info = args[3] as String?
+        val checking = args[4] as Boolean
+        val deleted = args[5] as Boolean
         ProductDetailUiState(
             product = product,
             history = history,
