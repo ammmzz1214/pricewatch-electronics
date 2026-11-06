@@ -1,5 +1,6 @@
 package com.pricewatch.electronics.data.repositories
 
+import androidx.room.withTransaction
 import com.pricewatch.electronics.core.common.Money
 import com.pricewatch.electronics.core.common.Result
 import com.pricewatch.electronics.data.local.CheckLogEntity
@@ -49,7 +50,7 @@ class ProductRepositoryImpl @Inject constructor(
     override suspend fun getProduct(id: Long): Product? =
         db.productDao().getById(id)?.toDomain()
 
-    override suspend fun addProduct(product: Product): Result<Long> = try {
+    override suspend fun addProduct(product: Product): Result<Long> { return try {
         if (db.productDao().countDuplicateUrl(product.productUrl, null) > 0) {
             return Result.Error("A product with this URL already exists.")
         }
@@ -57,6 +58,7 @@ class ProductRepositoryImpl @Inject constructor(
         Result.Success(newId)
     } catch (e: Exception) {
         Result.Error(e.message ?: "Failed to add product.", e)
+    }
     }
 
     private suspend fun addProductTransactional(product: Product): Long {
@@ -81,7 +83,7 @@ class ProductRepositoryImpl @Inject constructor(
         return newId
     }
 
-    override suspend fun updateProduct(product: Product): Result<Unit> = try {
+    override suspend fun updateProduct(product: Product): Result<Unit> { return try {
         if (db.productDao().countDuplicateUrl(product.productUrl, product.id) > 0) {
             return Result.Error("Another product already uses this URL.")
         }
@@ -90,8 +92,9 @@ class ProductRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         Result.Error(e.message ?: "Failed to update product.", e)
     }
+    }
 
-    override suspend fun deleteProduct(id: Long): Result<Unit> = try {
+    override suspend fun deleteProduct(id: Long): Result<Unit> { return try {
         db.withTransaction {
             db.productDao().deleteById(id)
             // Price history and check logs are deleted by CASCADE foreign keys.
@@ -99,6 +102,7 @@ class ProductRepositoryImpl @Inject constructor(
         Result.Success(Unit)
     } catch (e: Exception) {
         Result.Error(e.message ?: "Failed to delete product.", e)
+    }
     }
 
     /**
@@ -111,7 +115,7 @@ class ProductRepositoryImpl @Inject constructor(
         productId: Long,
         errorCode: String?,
         errorMessage: String?
-    ): Result<Unit> = try {
+    ): Result<Unit> { return try {
         val now = System.currentTimeMillis()
         val existing = db.productDao().getById(productId)
             ?: return Result.Error("Product not found.")
@@ -134,12 +138,13 @@ class ProductRepositoryImpl @Inject constructor(
     } catch (e: Exception) {
         Result.Error(e.message ?: "Failed to record failed check.", e)
     }
+    }
 
     override suspend fun recordSuccessfulCheck(
         productId: Long,
         newPriceMinorUnits: Long,
         source: String
-    ): Result<Unit> = try {
+    ): Result<Unit> { return try {
         val now = System.currentTimeMillis()
         val existing = db.productDao().getById(productId)
             ?: return Result.Error("Product not found.")
@@ -194,6 +199,7 @@ class ProductRepositoryImpl @Inject constructor(
         Result.Success(Unit)
     } catch (e: Exception) {
         Result.Error(e.message ?: "Failed to record successful check.", e)
+    }
     }
 
     override suspend fun existsDuplicate(productUrl: String, excludeId: Long?): Boolean =
